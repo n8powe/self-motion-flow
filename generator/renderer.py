@@ -136,7 +136,7 @@ def inside(tree, C):
     raise RuntimeError('Ray parity did not terminate')
 
 
-def validate(s):
+def validate(s, conditions=None):
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
     for block in list(bpy.data.meshes):
@@ -153,7 +153,8 @@ def validate(s):
     target = shape(dict(family=s['target_family'], seed=s['target_mesh_seed'], center=s['target']['center'], size=s['target']['size'], rotation=s['target_rotation']))
     bpy.context.view_layer.update()
     background = bvh(objects)[0]
-    conditions = ['absent', 'static', 'moving'] if s['split'] == 'test' else ['static']
+    if conditions is None:
+        conditions = ['absent', 'static', 'moving'] if s['split'] == 'test' else ['static']
     minimum = float('inf')
     for condition in conditions:
         velocity = np.asarray(s['object_translation_per_frame']) if condition == 'moving' else np.zeros(3)
@@ -186,13 +187,14 @@ def validate(s):
     return dict(passed=True, minimum_clearance=minimum)
 
 
-def render_scene(s, root):
-    safety = validate(s)
+def render_scene(s, root, conditions=None):
+    safety = validate(s, conditions)
     if not safety['passed']:
         (root / 'rejected.json').write_text(json.dumps(dict(parent=s['id'], scene_hash=s['scene_hash'], reason=safety)))
         return
     rng = np.random.default_rng(s['seed'])
-    conditions = ['absent', 'static', 'moving'] if s['split'] == 'test' else ['static']
+    if conditions is None:
+        conditions = ['absent', 'static', 'moving'] if s['split'] == 'test' else ['static']
     started = time.monotonic()
     for condition in conditions:
         dest = root / condition

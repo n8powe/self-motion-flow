@@ -15,6 +15,8 @@ from worlds import make_scene
 
 def generate(args):
     conditions = ["absent", "static", "moving"] if args.split == "test" else ["static"]
+    if args.split == "train" and args.moving_train:
+        conditions = ["static", "moving"]
     destination = args.out.resolve() / args.split
     destination.parent.mkdir(parents=True, exist_ok=True)
     stage = destination.with_name(destination.name + ".partial")
@@ -35,7 +37,7 @@ def generate(args):
         directory.mkdir()
         (directory / "scene.json").write_text(json.dumps(scene, indent=2))
         try:
-            render_scene(scene, directory)
+            render_scene(scene, directory, conditions=conditions)
         except ValueError as error:
             if not str(error).startswith("Invalid world/camera"):
                 raise
@@ -76,7 +78,11 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=721)
     parser.add_argument("--scenes", type=int, default=4)
     parser.add_argument("--frames", type=int, default=6)
+    parser.add_argument("--moving-train", action="store_true",
+                        help="Render matched stationary and independently moving targets for each training scene.")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else [])
     if args.frames < 2 or args.scenes < 1 or args.seed < 0:
         parser.error("Use at least one scene, two frames and a nonnegative seed.")
+    if args.moving_train and args.split != "train":
+        parser.error("--moving-train applies only to the train split.")
     generate(args)

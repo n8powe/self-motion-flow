@@ -84,6 +84,26 @@ python train_heading.py --data generated/demo
 
 Each scene includes 256 × 256 RGB frames, its scene parameters, and 128 × 128 reference fields for each consecutive frame pair. The reference files store image displacement in pixels, start-frame axial depth in meters, target occupancy, endpoint validity, occlusion, frame interval and camera intrinsics for each grid. Each split also contains a loader-ready array with velocity in pixels/s and mean-one inverse depth. **Newly generated arrays use renderer ground truth. The bundled heading tutorial uses RAFT flow and estimated depth.** Use `--seed` for a new reproducible set of worlds and a fresh output location for each run. The split participates in seed derivation.
 
+### Customize the training and test sets
+
+Add `--moving-train` to generate two versions of each training scene with the same camera path and initial target position. The target stays stationary in one and translates independently in the other. For example:
+
+```sh
+blender --background --factory-startup --python-exit-code 1 --python generator/generate.py -- --out generated/mixed --split train --moving-train --scenes 16 --frames 6 --seed 721
+```
+
+This produces 160 fields from 16 independent scenes: 80 stationary and 80 moving. Use the manifest's `condition` column to select either group and `parent` to keep paired observations together. The published training set and the default training and validation commands contain only stationary worlds.
+
+| Option | Effect |
+| --- | --- |
+| `--split` | Selects train, validation or test. Test renders absent, stationary and moving conditions for every camera path. |
+| `--scenes` | Number of accepted parent scenes per split (default 4). |
+| `--frames` | RGB frames per scene and condition (default 6). Each sequence yields one fewer flow interval, at 90 Hz. |
+| `--seed` | Changes the reproducible set of layouts and trajectories (default 721). Each split has its own seed stream. |
+| `--out` | Parent output directory. Use a fresh split destination for a new configuration. |
+
+For experiments that require different stimulus distributions, edit [make_scene in worlds.py](generator/worlds.py). It defines room-size ranges, floor-only frequency, clutter counts and sizes, camera heading and step sizes, rotation probability, and target speed relative to camera speed. These are source-level settings shared by the generated splits. Camera step length is in metres per frame and rotation step is in radians per frame. Increasing room size changes the distribution of visible depths indirectly through the rendered geometry. Retain the modified generator with the new dataset to document its sampling design.
+
 ## Data
 
 | Split | Flow fields | Independent parent scenes | Resolution |

@@ -21,7 +21,20 @@ python -m pip install numpy
 python example.py
 ```
 
-The script verifies the download, loads all three conditions, and prints target area and estimated-versus-reference flow error. The example is the first scene and first interval in the expanded test manifest. The full dataset download is pending.
+The script verifies the sample, loads all three conditions, and prints target area and estimated-versus-reference flow error. The example is the first scene and first interval in the expanded test manifest.
+
+## Full dataset
+
+The release is packaged as one ZIP64 archive, `self-motion-flow-v1.zip` (82.30 GB, 76.65 GiB). The public download link is pending. [Check the archive SHA-256](self-motion-flow-v1.sha256). It includes all four splits, 106,400 model-grid fields with flow, depth and masks, 127,080 source RGB frames, and 106,400 corresponding physical reference records with metric depth and image displacement. Each scene also includes its geometry and camera path.
+
+After downloading the ZIP, run the following from this repository. The preparer reads directly from the ZIP, writes only the requested arrays and checks each against the original frozen dataset's SHA-256. Preparing training and validation requires about 19.9 GB of extra disk space.
+
+```sh
+python prepare_archive.py self-motion-flow-v1.zip --out data --splits train validation
+python train_heading.py --data data
+```
+
+The per-interval files under `DATA/fields/` can also be read independently. Native RGB PNGs and metric geometry are under `DATA/rendered/`. The archive README documents the coordinate conventions and array keys.
 
 ## Train a camera-heading predictor
 

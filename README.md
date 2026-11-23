@@ -36,6 +36,16 @@ python train_heading.py --data data
 
 The per-interval files under `DATA/fields/` can also be read independently. Native RGB PNGs and metric geometry are under `DATA/rendered/`. The archive README documents the coordinate conventions and array keys.
 
+### Reproduce the geometry and coverage checks
+
+The validation script reads the ZIP directly. It checks split membership and heading labels, independently projects source depth through the camera and target motion, and compares archived RAFT flow against geometric flow. Output CSVs identify each sampled scene and interval. The plotting script uses those tables and a matched example from the ZIP.
+
+```sh
+python -m pip install numpy scipy pillow matplotlib pandas
+python validation/validate_release.py self-motion-flow-v1.zip --out results
+python validation/figures.py self-motion-flow-v1.zip --results results --out figures
+```
+
 ## Train a camera-heading predictor
 
 The repository includes a small [supervised learning example](train_heading.py) that runs on CPU. Its inputs are measured flow and optionally depth. Its target is the **observer's 3D translation direction in the camera coordinate system at the start of the clip**. A heading of 0° points right, 90° forward, 180° left, and 270° backward. Positive elevation points up.

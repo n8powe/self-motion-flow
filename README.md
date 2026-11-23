@@ -2,6 +2,10 @@
 
 Learn optic flow from scenes where only the observer moves. Test whether a model detects an independently moving object when camera motion and scene geometry are held fixed.
 
+<img src="images/camera-motion.gif" alt="A camera moves through a checkerboard room past stationary foreground objects" width="384">
+
+Only the camera moves in this held-out room. Nearby objects shift farther across the image than the back wall. All 31 RGB frames are shown in order at 20 frames/s, slowed from the simulated 90 frames/s.
+
 This synthetic dataset includes camera translation and rotation in rooms and open-floor worlds. Each matched test scene shows the same target absent, stationary, or moving. A stationary target can produce a strong flow boundary from depth alone, making it a useful control for object-motion detection.
 
 ![Rendered open-floor and enclosed-room scenes alongside their optic flow vectors and axial depth maps](images/scenes.png)

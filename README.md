@@ -4,6 +4,10 @@ Learn optic flow from scenes where only the observer moves. Test whether a model
 
 This synthetic dataset includes camera translation and rotation in rooms and open-floor worlds. Each matched test scene shows the same target absent, stationary, or moving. A stationary target can produce a strong flow boundary from depth alone, making it a useful control for object-motion detection.
 
+![Rendered open-floor and enclosed-room scenes alongside their optic flow vectors and axial depth maps](images/scenes.png)
+
+Two held-out scenes at the first interval of the moving-target condition. Yellow outlines mark the independently moving object. Arrows show renderer-derived image velocity at valid locations, with a speed key for each row. Both depth panels share a scale in meters. The first row is the downloadable matched scene.
+
 ## Try a matched scene
 
 [Download the sample (.npz)](sample/matched_scene.npz) or clone this repository and run the example with Python and NumPy.
@@ -14,6 +18,44 @@ python example.py
 ```
 
 The script verifies the download, loads all three conditions, and prints target area and estimated-versus-reference flow error. The example is the first scene and first interval in the expanded test manifest. The full dataset download is pending.
+
+## Train a camera-heading predictor
+
+The repository includes a small [supervised learning example](train_heading.py) that runs on CPU. Its inputs are measured flow and optionally depth. Its target is the **observer's 3D translation direction in the camera coordinate system at the start of the clip**. A heading of 0° points right, 90° forward, 180° left, and 270° backward. Positive elevation points up.
+
+```sh
+python train_heading.py
+python train_heading.py --flow-only
+python train_heading.py --save heading_model.npz
+```
+
+The tutorial contains one stationary-world field from each of 512 training scenes and 128 separate validation scenes. We spatially averaged the original estimated fields onto a 16 × 16 grid and converted flow to pixels/s on that grid. The readout pools the inputs onto an 8 × 8 grid, normalizes flow by its field RMS, then fits three outputs by ridge regression. Validation error is the angle between predicted and true heading, averaged within each scene and then across scenes. On the bundled subset the flow-and-depth example gives **22.53°**, flow alone gives **20.95°**, and predicting the training-set mean direction gives **95.48°**. These figures describe this linear tutorial on the bundled split.
+
+The [NumPy loader](data.py) memory-maps the fields and looks up each label by its manifest row. It works with the bundled tutorial, the frozen full splits and the generator output.
+
+```python
+from data import HeadingDataset
+
+train = HeadingDataset("sample/heading", "train")
+field, heading = train[0]       # (3, H, W), (3,)
+flow, relative_inverse_depth = field[:2], field[2]
+right, up, forward = heading
+```
+
+To train on a full or generated dataset, run `python train_heading.py --data PATH_TO_DATA`. The [subset builder](make_heading_sample.py) records source indices so the tutorial can be reproduced from the full arrays.
+
+## Generate additional scenes with Blender
+
+The [standalone generator](generator/generate.py) uses the procedural worlds, camera paths, textures, mesh ray casting and visibility checks from the 100k dataset. Run these commands from the repository root with Blender 4.3 on your path. The first command makes a test scene in all three target conditions. The next two generate the stationary training and validation inputs for the heading example.
+
+```sh
+blender --background --factory-startup --python-exit-code 1 --python generator/generate.py -- --out generated/demo --split test --scenes 1 --frames 3
+blender --background --factory-startup --python-exit-code 1 --python generator/generate.py -- --out generated/demo --split train --scenes 16 --frames 3
+blender --background --factory-startup --python-exit-code 1 --python generator/generate.py -- --out generated/demo --split validation --scenes 8 --frames 3
+python train_heading.py --data generated/demo
+```
+
+Each scene includes 256 × 256 RGB frames, its scene parameters, and 128 × 128 reference fields for each consecutive frame pair. The reference files store image displacement in pixels, start-frame axial depth in meters, target occupancy, endpoint validity, occlusion, frame interval and camera intrinsics for each grid. Each split also contains a loader-ready array with velocity in pixels/s and mean-one inverse depth. **Newly generated arrays use renderer ground truth. The bundled heading tutorial uses RAFT flow and estimated depth.** Use `--seed` for a new reproducible set of worlds and a fresh output location for each run. The split participates in seed derivation.
 
 ## Data
 

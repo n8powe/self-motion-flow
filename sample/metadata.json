@@ -1,0 +1,20 @@
+{
+  "split": "expanded_test",
+  "parent": "deep100k_test_00000",
+  "frame": 0,
+  "dt_seconds": 0.011111111111111112,
+  "world_type": "open_floor",
+  "heading_az_deg": 94.08981869747646,
+  "heading_el_deg": -49.12014362976484,
+  "conditions": [
+    "absent",
+    "static",
+    "moving"
+  ],
+  "source_keys": [
+    "deep100k_test_00000_absent_00",
+    "deep100k_test_00000_static_00",
+    "deep100k_test_00000_moving_00"
+  ],
+  "sha256": "9fb18a13d47d9cefa9bf37e95b4af14be20bd415f315e45dbdd7e7ac5ec6f2dc"
+}
